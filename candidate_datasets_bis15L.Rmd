@@ -8,22 +8,30 @@ date: "2026-02-18"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Sania's Candidate Datasets 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+- https://datadryad.org/dataset/doi:10.5061/dryad.ksn02v7kc
+- https://datadryad.org/dataset/doi:10.5061/dryad.w9ghx3g2r 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Load the tidyverse
+```{r}
+library("tidyverse")
+library("janitor")
+```
+```{r}
+coral <- read_csv("data/Fig1A.data.csv")
 
-```{r cars}
-summary(cars)
+```
+```{r}
+coral
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## Mason's Candidate Datasets 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Arturo's Candidate Datasets 
+
+## Finalized Dataset
+
+
