@@ -1,6 +1,6 @@
 Welcome!
 
-This is Group 12's page.
+This is Group 12's page. Our names are Sania, Mason, and Arturo.
 
 Data we are analyzing:
 https://datadryad.org/dataset/doi:10.5061/dryad.8b83gn8
