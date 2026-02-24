@@ -32,6 +32,9 @@ coral
 - https://datadryad.org/dataset/doi:10.5061/dryad.8b83gn8, https://www.cambridge.org/core/journals/parasitology/article/effects-of-an-alternative-host-on-the-prevalence-and-intensity-of-infection-of-a-bumble-bee-parasite/77AFE4281A085A4DA42B71DD68216F72 
 
 ## Arturo's Candidate Datasets 
+https://datadryad.org/dataset/doi:10.5061/dryad.r7sqv9sfp
+
+https://datadryad.org/dataset/doi:10.5061/dryad.prr4xgxz3#readme
 
 ## Finalized Dataset
 
