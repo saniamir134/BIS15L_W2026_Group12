@@ -25,11 +25,51 @@ required libraries
 ```{r}
 library(akima)
 library(viridis)
+library(ggmap)
+```
+```{r}
+register_stadiamaps("0ca4e2d5-36a9-4a89-ab81-cfc2f0ec1652", write = FALSE)
+
+hull <- pacific_tad %>%
+  slice(chull(lon, lat))
+
+bbox <- c(
+  left = min(pacific_tad$lon),
+  bottom = min(pacific_tad$lat),
+  right = max(pacific_tad$lon),
+  top = max(pacific_tad$lat)
+)
+
+basemap <- get_stadiamap(
+  bbox = bbox,
+  zoom = 7,
+  maptype = "alidade_smooth"
+)
+
+ggmap(basemap) +
+  geom_polygon(
+    data = hull,
+    aes(lon, lat),
+    fill = "white",
+    color = "black",
+    alpha = 0.3
+  ) +
+  labs(
+    title = "Sampled Region of Pacific Mako Sharks",
+    x = "Longitude",
+    y = "Latitude"
+  )
+
+```
+```{r}
+library(maps)
+
+world <- map_data("world")
 ```
 
 
 ```{r}
-deepdata <- pacific_tad %>% 
+deepdata <- pacific_tad %>%
   mutate(
     deep_time = b100 + b150 + b200 + b_200
   )
@@ -53,6 +93,35 @@ ggplot(interp_df, aes(x = lon, y = lat, fill = deep_time)) +
     x = "Longitude",
     y = "Latitude"
   )
+
+ggplot() +
+  geom_raster(data = interp_df, aes(x = lon, y = lat, fill = deep_time)) +
+
+  geom_polygon(data = world,
+               aes(x = long, y = lat, group = group),
+               fill = "white",
+               color = "black",
+               linewidth = 0.2) +
+  
+  scale_fill_viridis_c(
+    name = "Proportion Time >100 m",
+    limits = c(0,1),
+    option = "cividis",
+    na.value = NA
+  ) +
+  coord_fixed(
+  xlim = range(interp_df$lon) + c(-2,2),
+  ylim = range(interp_df$lat) + c(-2,2)
+  )+
+  
+  
+  theme_classic() +
+  labs(
+    title = "Spatial Heatmap of Deep Diving Behavior",
+    x = "Longitude",
+    y = "Latitude"
+  )
+  
 ```
 
 ```{r}
@@ -306,7 +375,65 @@ pacific_tad %>%
     )
 ```
 
-```{r}
 
+
+
+niche of sharks
+```{r}
+ggplot(pacific_tad, aes(x = sst, y = do_depth)) +
+  stat_density_2d(
+    aes(fill = after_stat(level)),
+    geom = "polygon",
+    alpha = 0.7
+  ) +
+  scale_fill_viridis_c(name = "Use Density",
+                      option = "cividis") +
+  theme_minimal() +
+  labs(
+    title = "Temperature–Oxygen habitat envelope",
+    x = "Temperature (°C)",
+    y = "Dissolved Oxygen"
+  )
 ```
+
+```{r}
+depth_long <- pacific_tad %>% 
+  mutate(
+      depth_zone = case_when(
+        do_depth < 100 ~ "Above 100 m",
+        do_depth >= 100 & do_depth <= 200 ~ "100-200 m",
+        do_depth > 200 ~ "Below 200 m"
+      )
+  ) %>%
+  pivot_longer(
+    cols = c(b_50, b100, b150, b200, b_200),
+    names_to = "depth_bin",
+    values_to = "time_prop"
+  )
+
+depth_long$depth_bin <- factor(
+  depth_long$depth_bin,
+  levels = c("b_50","b100","b150","b200","b_200")
+)
+
+depth_long$depth_zone <- factor(
+  depth_long$depth_zone,
+  levels = c("Above 100 m", "100-200 m", "Below 200 m")
+)
+
+ggplot(depth_long, aes(x = depth_bin, y = time_prop)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.7) +
+  theme_minimal()+
+  coord_flip()+
+  labs(
+    title = "Distribution of Time Spent at Each Depth by Depth of ",
+    x = "Depth Bin",
+    y = "Proportion of Time"
+  )+
+  facet_wrap(~depth_zone)
+```
+
+
+
+
 
