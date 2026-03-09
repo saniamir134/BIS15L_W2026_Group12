@@ -1,0 +1,312 @@
+---
+title: "initial workflow"
+output: html_document
+date: "2026-03-08"
+---
+Required libraries
+```{r}
+library("tidyverse")
+library("janitor")
+library("naniar")
+```
+
+
+
+initial data reading and cleaning
+```{r}
+atlantic_argos <- read_csv("../input_files/AtlanticArgos.csv")
+
+pacific_argos <- read_csv("../input_files/PacificArgos.csv")
+
+pacific_tad <- read_csv("../input_files/Pacific_TAD.csv") %>% 
+  clean_names()
+```
+required libraries
+```{r}
+library(akima)
+library(viridis)
+```
+
+
+```{r}
+deepdata <- pacific_tad %>% 
+  mutate(
+    deep_time = b100 + b150 + b200 + b_200
+  )
+
+interp_data <- with(deepdata, interp(x = lon, y = lat, z = deep_time, duplicate = "mean"))
+
+interp_df <- expand.grid(
+  lon = interp_data$x,
+  lat = interp_data$y
+)
+
+interp_df$deep_time <- as.vector(interp_data$z)
+ggplot(interp_df, aes(x = lon, y = lat, fill = deep_time)) +
+  geom_raster() +
+  scale_fill_viridis_c(name = "Proportion Time >100 m",
+                       limits = c(0,1),
+                       option = "cividis") +
+  coord_fixed() +
+  theme_minimal() +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
+```
+
+```{r}
+sst_interp <- with(pacific_tad,
+  interp(x = lon, y = lat, z = sst, duplicate = "mean")
+)
+
+sst_df <- expand.grid(
+  lon = sst_interp$x,
+  lat = sst_interp$y
+)
+
+sst_df$SST <- as.vector(sst_interp$z)
+
+
+ggplot(sst_df, aes(lon, lat, fill = SST)) +
+  geom_raster() +
+  scale_fill_viridis_c(name = "Sea Surface Temp (°C)",
+                       option = "magma") +
+  coord_fixed() +
+  theme_minimal() +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
+```
+```{r}
+do_interp <- with(pacific_tad,
+  interp(x = lon, y = lat, z = do_depth, duplicate = "mean")
+)
+
+do_df <- expand.grid(
+  lon = do_interp$x,
+  lat = do_interp$y
+)
+
+do_df$DO_depth <- as.vector(do_interp$z)
+
+ggplot(do_df, aes(lon, lat, fill = DO_depth)) +
+  geom_raster() +
+  scale_fill_viridis_c(name = "Hypoxic Boundary Depth (m)") +
+  coord_fixed() +
+  theme_minimal() +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
+```
+
+trend graphs of dive depth to do depth
+```{r}
+pacific_tad %>% 
+  select(id, do_depth, b_50) %>% 
+  ggplot(
+    mapping = aes(
+      x = do_depth,
+      y = b_50)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Dissolved Oxygen",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, do_depth, b100) %>% 
+  ggplot(
+    mapping = aes(
+      x = do_depth,
+      y = b100)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Dissolved Oxygen",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, do_depth, b150) %>% 
+  ggplot(
+    mapping = aes(
+      x = do_depth,
+      y = b150)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Dissolved Oxygen",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, do_depth, b200) %>% 
+  ggplot(
+    mapping = aes(
+      x = do_depth,
+      y = b200)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Dissolved Oxygen",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, do_depth, b_200) %>% 
+  ggplot(
+    mapping = aes(
+      x = do_depth,
+      y = b_200)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Dissolved Oxygen",
+      y = "Proportion of Time"
+    )
+```
+
+trends of surface temperature to dive depth
+```{r}
+pacific_tad %>% 
+  select(id, sst, b_50) %>% 
+  ggplot(
+    mapping = aes(
+      x = sst,
+      y = b_50)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Ocean Surface Temperature",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, sst, b100) %>% 
+  ggplot(
+    mapping = aes(
+      x = sst,
+      y = b100)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Ocean Surface Temperature",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, sst, b150) %>% 
+  ggplot(
+    mapping = aes(
+      x = sst,
+      y = b150)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Ocean Surface Temperature",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, sst, b200) %>% 
+  ggplot(
+    mapping = aes(
+      x = sst,
+      y = b200)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Ocean Surface Temperature",
+      y = "Proportion of Time"
+    )
+```
+```{r}
+pacific_tad %>% 
+  select(id, sst, b_200) %>% 
+  ggplot(
+    mapping = aes(
+      x = sst,
+      y = b_200)
+    )+
+    geom_point(
+      alpha = 0.5)+
+    geom_smooth(
+      se = FALSE,
+      method = lm
+    )+
+    theme_classic()+
+    labs(
+      x = "Ocean Surface Temperature",
+      y = "Proportion of Time"
+    )
+```
+
+```{r}
+
+```
+
