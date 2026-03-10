@@ -46,7 +46,7 @@ basemap <- get_stadiamap(
   maptype = "alidade_smooth"
 )
 
-ggmap(basemap) +
+samplemap <- ggmap(basemap) +
   geom_polygon(
     data = hull,
     aes(lon, lat),
@@ -58,9 +58,15 @@ ggmap(basemap) +
     title = "Sampled Region of Pacific Mako Sharks",
     x = "Longitude",
     y = "Latitude"
-  )
+  )+
+  theme(plot.title = element_text(hjust = 0.5))
 
+samplemap
+
+ggsave("../output_files/samplemap.png", plot = samplemap, width = 7, height = 5, units = "in", dpi = 600)
 ```
+
+
 ```{r}
 library(maps)
 
@@ -82,48 +88,39 @@ interp_df <- expand.grid(
 )
 
 interp_df$deep_time <- as.vector(interp_data$z)
-ggplot(interp_df, aes(x = lon, y = lat, fill = deep_time)) +
-  geom_raster() +
-  scale_fill_viridis_c(name = "Proportion Time >100 m",
-                       limits = c(0,1),
-                       option = "cividis") +
-  coord_fixed() +
-  theme_minimal() +
-  labs(
-    x = "Longitude",
-    y = "Latitude"
-  )
 
-ggplot() +
-  geom_raster(data = interp_df, aes(x = lon, y = lat, fill = deep_time)) +
-
+divingheatmap <- ggplot()+
+  geom_raster(data = interp_df,
+              aes(
+                x = lon, 
+                y = lat, 
+                fill = deep_time)
+              )+
   geom_polygon(data = world,
                aes(x = long, y = lat, group = group),
                fill = "white",
                color = "black",
-               linewidth = 0.2) +
-  
+               linewidth = 0.2)+
   scale_fill_viridis_c(
-    name = "Proportion Time >100 m",
+    name = "Proportion Time > 100 m",
     limits = c(0,1),
     option = "cividis",
     na.value = NA
-  ) +
+  )+
   coord_fixed(
   xlim = range(interp_df$lon) + c(-2,2),
   ylim = range(interp_df$lat) + c(-2,2)
   )+
-  
-  
   theme_classic() +
   labs(
-    title = "Spatial Heatmap of Deep Diving Behavior",
+    title = "Heatmap of Deep Diving Behavior",
     x = "Longitude",
     y = "Latitude"
   )
+
+divingheatmap
   
 ```
-
 ```{r}
 sst_interp <- with(pacific_tad,
   interp(x = lon, y = lat, z = sst, duplicate = "mean")
@@ -136,17 +133,34 @@ sst_df <- expand.grid(
 
 sst_df$SST <- as.vector(sst_interp$z)
 
-
-ggplot(sst_df, aes(lon, lat, fill = SST)) +
-  geom_raster() +
+tempheatmap <- ggplot()+
+  geom_raster(data = sst_df,
+              aes(
+                x = lon, 
+                y = lat, 
+                fill = SST)
+              )+
+  geom_polygon(data = world,
+               aes(x = long, y = lat, group = group),
+               fill = "white",
+               color = "black",
+               linewidth = 0.2)+
   scale_fill_viridis_c(name = "Sea Surface Temp (°C)",
-                       option = "magma") +
-  coord_fixed() +
-  theme_minimal() +
+                       option = "magma",
+                       na.value = NA
+                       )+
+  coord_fixed(
+    xlim = range(interp_df$lon) + c(-2,2),
+    ylim = range(interp_df$lat) + c(-2,2)
+  )+
+  theme_classic()+
   labs(
+    title = "Heatmap of Ocean Surface Temperature",
     x = "Longitude",
     y = "Latitude"
   )
+
+tempheatmap
 ```
 ```{r}
 do_interp <- with(pacific_tad,
@@ -160,122 +174,179 @@ do_df <- expand.grid(
 
 do_df$DO_depth <- as.vector(do_interp$z)
 
-ggplot(do_df, aes(lon, lat, fill = DO_depth)) +
-  geom_raster() +
-  scale_fill_viridis_c(name = "Hypoxic Boundary Depth (m)") +
-  coord_fixed() +
-  theme_minimal() +
+doheatmap <- ggplot()+
+  geom_raster(data = do_df,
+              aes(
+                x = lon, 
+                y = lat, 
+                fill = DO_depth)
+              )+
+  geom_polygon(data = world,
+               aes(x = long, y = lat, group = group),
+               fill = "white",
+               color = "black",
+               linewidth = 0.2)+
+  scale_fill_viridis_c(name = "Hypoxic Boundary Depth (m)",
+                       na.value = NA
+                       )+
+  coord_fixed(
+    xlim = range(interp_df$lon) + c(-2,2),
+    ylim = range(interp_df$lat) + c(-2,2)
+  )+
+  theme_classic()+
   labs(
+    title = "Heatmap of Hypoxic Boundary Depth",
     x = "Longitude",
     y = "Latitude"
   )
+
+doheatmap
+```
+```{r}
+ggsave("../output_files/divingheatmap.png", plot = divingheatmap, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/tempheatmap.png", plot = tempheatmap, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/doheatmap.png", plot = doheatmap, width = 7, height = 5, units = "in", dpi = 600)
 ```
 
 trend graphs of dive depth to do depth
 ```{r}
-pacific_tad %>% 
+b_50plot <- pacific_tad %>% 
   select(id, do_depth, b_50) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b_50)
+      y = b_50,
+      )
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "tan"
+      )+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Dissolved Oxygen",
+      title = "Oxygen Boundry vs Proportion of Time, Above 50 m",
+      x = "Dissolved Oxygen Boundry (m)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b100plot <- pacific_tad %>% 
   select(id, do_depth, b100) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b100)
+      y = b100,
+      )
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "tan"
+      )+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Dissolved Oxygen",
+      title = "Oxygen Boundry vs Proportion of Time, 50 - 100 m",
+      x = "Dissolved Oxygen Boundry (m)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b150plot <- pacific_tad %>% 
   select(id, do_depth, b150) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b150)
+      y = b150,
+      )
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "tan"
+      )+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Dissolved Oxygen",
+      title = "Oxygen Boundry vs Proportion of Time, 100 - 150 m",
+      x = "Dissolved Oxygen Boundry (m)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b200plot <- pacific_tad %>% 
   select(id, do_depth, b200) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b200)
+      y = b200,
+      )
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "tan"
+      )+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Dissolved Oxygen",
+      title = "Oxygen Boundry vs Proportion of Time, 150 - 200 m",
+      x = "Dissolved Oxygen Boundry (m)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b_200plot <- pacific_tad %>% 
   select(id, do_depth, b_200) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b_200)
+      y = b_200,
+      )
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "tan"
+      )+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Dissolved Oxygen",
+      title = "Oxygen Boundry vs Proportion of Time, Below 200 m",
+      x = "Dissolved Oxygen Boundry (m)",
       y = "Proportion of Time"
     )
 ```
 
+```{r}
+ggsave("../output_files/b_50plot.png", plot = b_50plot, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b100plot.png", plot = b100plot, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b150plot.png", plot = b150plot, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b200plot.png", plot = b200plot, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b_200plot.png", plot = b_200plot, width = 7, height = 5, units = "in", dpi = 600)
+
+```
+
 trends of surface temperature to dive depth
 ```{r}
-pacific_tad %>% 
+b_50plottemp <- pacific_tad %>% 
   select(id, sst, b_50) %>% 
   ggplot(
     mapping = aes(
@@ -283,19 +354,22 @@ pacific_tad %>%
       y = b_50)
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "pink")+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Ocean Surface Temperature",
+      title = "Ocean Surface Temperature  vs Proportion of Time, Above 50 m",
+      x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b100plottemp <- pacific_tad %>% 
   select(id, sst, b100) %>% 
   ggplot(
     mapping = aes(
@@ -303,19 +377,22 @@ pacific_tad %>%
       y = b100)
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "pink")+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Ocean Surface Temperature",
+      title = "Ocean Surface Temperature  vs Proportion of Time, 50 - 100 m",
+      x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b150plottemp <- pacific_tad %>% 
   select(id, sst, b150) %>% 
   ggplot(
     mapping = aes(
@@ -323,19 +400,22 @@ pacific_tad %>%
       y = b150)
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "pink")+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Ocean Surface Temperature",
+      title = "Ocean Surface Temperature  vs Proportion of Time, 100 - 150 m",
+      x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b200plottemp <- pacific_tad %>% 
   select(id, sst, b200) %>% 
   ggplot(
     mapping = aes(
@@ -343,19 +423,22 @@ pacific_tad %>%
       y = b200)
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "pink")+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Ocean Surface Temperature",
+      title = "Ocean Surface Temperature  vs Proportion of Time, 150 - 200 m",
+      x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-pacific_tad %>% 
+b_200plottemp <- pacific_tad %>% 
   select(id, sst, b_200) %>% 
   ggplot(
     mapping = aes(
@@ -363,24 +446,34 @@ pacific_tad %>%
       y = b_200)
     )+
     geom_point(
-      alpha = 0.5)+
+      alpha = 0.5,
+      color = "pink")+
     geom_smooth(
       se = FALSE,
-      method = lm
+      method = lm,
+      color = "black"
     )+
     theme_classic()+
     labs(
-      x = "Ocean Surface Temperature",
+      title = "Ocean Surface Temperature  vs Proportion of Time, Below 200 m",
+      x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
 
+```{r}
+ggsave("../output_files/b_50plottemp.png", plot = b_50plottemp, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b100plottemp.png", plot = b100plottemp, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b150plottemp.png", plot = b150plottemp, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b200plottemp.png", plot = b200plottemp, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b_200plottemp.png", plot = b_200plottemp, width = 7, height = 5, units = "in", dpi = 600)
 
+```
 
 
 niche of sharks
 ```{r}
-ggplot(pacific_tad, aes(x = sst, y = do_depth)) +
+dengraph <- ggplot(pacific_tad, aes(x = sst, y = do_depth)) +
   stat_density_2d(
     aes(fill = after_stat(level)),
     geom = "polygon",
@@ -388,12 +481,14 @@ ggplot(pacific_tad, aes(x = sst, y = do_depth)) +
   ) +
   scale_fill_viridis_c(name = "Use Density",
                       option = "cividis") +
-  theme_minimal() +
+  theme_classic() +
   labs(
-    title = "Temperature–Oxygen habitat envelope",
+    title = "Temperature–Oxygen Habitat Envelope",
     x = "Temperature (°C)",
     y = "Dissolved Oxygen"
   )
+
+ggsave("../output_files/dengraph.png", plot = dengraph, width = 7, height = 5, units = "in", dpi = 600)
 ```
 
 ```{r}
@@ -421,16 +516,39 @@ depth_long$depth_zone <- factor(
   levels = c("Above 100 m", "100-200 m", "Below 200 m")
 )
 
-ggplot(depth_long, aes(x = depth_bin, y = time_prop)) +
-  geom_boxplot(fill = "steelblue", alpha = 0.7) +
+disgraph <- ggplot(depth_long, aes(x = depth_bin, y = time_prop)) +
+  geom_boxplot(fill = "tan", alpha = 0.7) +
   theme_minimal()+
   coord_flip()+
   labs(
-    title = "Distribution of Time Spent at Each Depth by Depth of ",
-    x = "Depth Bin",
+    title = "Distribution of Time at Each Depth by Dissolved Oxygen Boundry Depth",
+    x = "Depth Range",
     y = "Proportion of Time"
   )+
-  facet_wrap(~depth_zone)
+  facet_wrap(~depth_zone)+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme_classic()
+
+disgraph
+
+ggsave("../output_files/disgraph.png", plot = disgraph, width = 7, height = 5, units = "in", dpi = 600)
+```
+```{r}
+relategraph <- pacific_tad %>%
+  ggplot(aes(x = sst, y = do_depth)) +
+  geom_point(alpha = 0.6, color = "#028284") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  theme_classic() +
+  labs(
+    x = "Sea Surface Temperature (°C)",
+    y = "Dissolved Oxygen Depth",
+    title = "Relationship Between SST and DO Depth"
+  )
+
+relategraph
+
+ggsave("../output_files/relategraph.png", plot = relategraph, width = 7, height = 5, units = "in", dpi = 600)
+
 ```
 
 
