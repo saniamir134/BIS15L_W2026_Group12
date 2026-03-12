@@ -3,16 +3,36 @@ title: "initial workflow"
 output: html_document
 date: "2026-03-08"
 ---
-Required libraries
+Project Responsibilities
+
+Sania Mir 
+- Created Presentation
+- Data exploration
+- Organized Repository
+
+Mason Yates
+- Maps, Heatmaps, Density graphs
+- Shiny App features
+- Organized Code
+
+Arturo Alvarez
+- Scatter and Boxplot graphs
+- Shiny App
+
+
+###required libraries
 ```{r}
-library("tidyverse")
-library("janitor")
-library("naniar")
+library(tidyverse)
+library(janitor)
+library(naniar)
+library(ggplot2)
+library(maps)
+library(ggmap)
+library(viridis)
+library(akima)
 ```
 
-
-
-initial data reading and cleaning
+###initial data reading and cleaning
 ```{r}
 atlantic_argos <- read_csv("../input_files/AtlanticArgos.csv")
 
@@ -21,12 +41,8 @@ pacific_argos <- read_csv("../input_files/PacificArgos.csv")
 pacific_tad <- read_csv("../input_files/Pacific_TAD.csv") %>% 
   clean_names()
 ```
-required libraries
-```{r}
-library(akima)
-library(viridis)
-library(ggmap)
-```
+
+###maps of sample and data distrubution 
 ```{r}
 register_stadiamaps("0ca4e2d5-36a9-4a89-ab81-cfc2f0ec1652", write = FALSE)
 
@@ -65,15 +81,9 @@ samplemap
 
 ggsave("../output_files/samplemap.png", plot = samplemap, width = 7, height = 5, units = "in", dpi = 600)
 ```
-
-
 ```{r}
-library(maps)
-
 world <- map_data("world")
 ```
-
-
 ```{r}
 deepdata <- pacific_tad %>%
   mutate(
@@ -208,7 +218,7 @@ ggsave("../output_files/tempheatmap.png", plot = tempheatmap, width = 7, height 
 ggsave("../output_files/doheatmap.png", plot = doheatmap, width = 7, height = 5, units = "in", dpi = 600)
 ```
 
-trend graphs of dive depth to do depth
+###trend graphs of dive depth to do depth
 ```{r}
 b_50plot <- pacific_tad %>% 
   select(id, do_depth, b_50) %>% 
@@ -229,18 +239,21 @@ b_50plot <- pacific_tad %>%
     )+
     theme_classic()+
     labs(
-      title = "Oxygen Boundry vs Proportion of Time, Above 50 m",
-      x = "Dissolved Oxygen Boundry (m)",
+      title = "Oxygen Boundary vs Proportion of Time, Above 50 m",
+      x = "Dissolved Oxygen Boundary (m)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-b100plot <- pacific_tad %>% 
-  select(id, do_depth, b100) %>% 
+b50_150plot <- pacific_tad %>%
+  mutate(
+    b50_150 = b100 + b150
+  ) %>% 
+  select(id, do_depth, b50_150) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b100,
+      y = b50_150,
       )
     )+
     geom_point(
@@ -254,18 +267,21 @@ b100plot <- pacific_tad %>%
     )+
     theme_classic()+
     labs(
-      title = "Oxygen Boundry vs Proportion of Time, 50 - 100 m",
-      x = "Dissolved Oxygen Boundry (m)",
+      title = "Oxygen Boundary vs Proportion of Time, 50 - 150 m",
+      x = "Dissolved Oxygen Boundary (m)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-b150plot <- pacific_tad %>% 
-  select(id, do_depth, b150) %>% 
+b150bplot <- pacific_tad %>%
+  mutate(
+    b150b = b200 + b_200
+  ) %>% 
+  select(id, do_depth, b150b) %>% 
   ggplot(
     mapping = aes(
       x = do_depth,
-      y = b150,
+      y = b150b,
       )
     )+
     geom_point(
@@ -279,72 +295,19 @@ b150plot <- pacific_tad %>%
     )+
     theme_classic()+
     labs(
-      title = "Oxygen Boundry vs Proportion of Time, 100 - 150 m",
-      x = "Dissolved Oxygen Boundry (m)",
+      title = "Oxygen Boundary vs Proportion of Time, Below 150 m",
+      x = "Dissolved Oxygen Boundary (m)",
       y = "Proportion of Time"
     )
 ```
-```{r}
-b200plot <- pacific_tad %>% 
-  select(id, do_depth, b200) %>% 
-  ggplot(
-    mapping = aes(
-      x = do_depth,
-      y = b200,
-      )
-    )+
-    geom_point(
-      alpha = 0.5,
-      color = "tan"
-      )+
-    geom_smooth(
-      se = FALSE,
-      method = lm,
-      color = "black"
-    )+
-    theme_classic()+
-    labs(
-      title = "Oxygen Boundry vs Proportion of Time, 150 - 200 m",
-      x = "Dissolved Oxygen Boundry (m)",
-      y = "Proportion of Time"
-    )
-```
-```{r}
-b_200plot <- pacific_tad %>% 
-  select(id, do_depth, b_200) %>% 
-  ggplot(
-    mapping = aes(
-      x = do_depth,
-      y = b_200,
-      )
-    )+
-    geom_point(
-      alpha = 0.5,
-      color = "tan"
-      )+
-    geom_smooth(
-      se = FALSE,
-      method = lm,
-      color = "black"
-    )+
-    theme_classic()+
-    labs(
-      title = "Oxygen Boundry vs Proportion of Time, Below 200 m",
-      x = "Dissolved Oxygen Boundry (m)",
-      y = "Proportion of Time"
-    )
-```
-
 ```{r}
 ggsave("../output_files/b_50plot.png", plot = b_50plot, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b100plot.png", plot = b100plot, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b150plot.png", plot = b150plot, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b200plot.png", plot = b200plot, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b_200plot.png", plot = b_200plot, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b50_150plot.png", plot = b50_150plot, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b150bplot.png", plot = b150bplot, width = 7, height = 5, units = "in", dpi = 600)
 
 ```
 
-trends of surface temperature to dive depth
+###trends of surface temperature to dive depth
 ```{r}
 b_50plottemp <- pacific_tad %>% 
   select(id, sst, b_50) %>% 
@@ -369,12 +332,15 @@ b_50plottemp <- pacific_tad %>%
     )
 ```
 ```{r}
-b100plottemp <- pacific_tad %>% 
-  select(id, sst, b100) %>% 
+b50_150plottemp <- pacific_tad %>%
+  mutate(
+    b50_150 = b100 + b150
+  ) %>% 
+  select(id, sst, b50_150) %>% 
   ggplot(
     mapping = aes(
       x = sst,
-      y = b100)
+      y = b50_150)
     )+
     geom_point(
       alpha = 0.5,
@@ -386,18 +352,21 @@ b100plottemp <- pacific_tad %>%
     )+
     theme_classic()+
     labs(
-      title = "Ocean Surface Temperature  vs Proportion of Time, 50 - 100 m",
+      title = "Ocean Surface Temperature  vs Proportion of Time, 50 - 150 m",
       x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
 ```{r}
-b150plottemp <- pacific_tad %>% 
-  select(id, sst, b150) %>% 
+b150bplottemp <- pacific_tad %>% 
+  mutate(
+    b150b = b200 + b_200
+  ) %>% 
+  select(id, sst, b150b) %>% 
   ggplot(
     mapping = aes(
       x = sst,
-      y = b150)
+      y = b150b)
     )+
     geom_point(
       alpha = 0.5,
@@ -409,69 +378,18 @@ b150plottemp <- pacific_tad %>%
     )+
     theme_classic()+
     labs(
-      title = "Ocean Surface Temperature  vs Proportion of Time, 100 - 150 m",
+      title = "Ocean Surface Temperature  vs Proportion of Time, Below 150 m",
       x = "Ocean Surface Temperature (°C)",
       y = "Proportion of Time"
     )
 ```
-```{r}
-b200plottemp <- pacific_tad %>% 
-  select(id, sst, b200) %>% 
-  ggplot(
-    mapping = aes(
-      x = sst,
-      y = b200)
-    )+
-    geom_point(
-      alpha = 0.5,
-      color = "pink")+
-    geom_smooth(
-      se = FALSE,
-      method = lm,
-      color = "black"
-    )+
-    theme_classic()+
-    labs(
-      title = "Ocean Surface Temperature  vs Proportion of Time, 150 - 200 m",
-      x = "Ocean Surface Temperature (°C)",
-      y = "Proportion of Time"
-    )
-```
-```{r}
-b_200plottemp <- pacific_tad %>% 
-  select(id, sst, b_200) %>% 
-  ggplot(
-    mapping = aes(
-      x = sst,
-      y = b_200)
-    )+
-    geom_point(
-      alpha = 0.5,
-      color = "pink")+
-    geom_smooth(
-      se = FALSE,
-      method = lm,
-      color = "black"
-    )+
-    theme_classic()+
-    labs(
-      title = "Ocean Surface Temperature  vs Proportion of Time, Below 200 m",
-      x = "Ocean Surface Temperature (°C)",
-      y = "Proportion of Time"
-    )
-```
-
 ```{r}
 ggsave("../output_files/b_50plottemp.png", plot = b_50plottemp, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b100plottemp.png", plot = b100plottemp, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b150plottemp.png", plot = b150plottemp, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b200plottemp.png", plot = b200plottemp, width = 7, height = 5, units = "in", dpi = 600)
-ggsave("../output_files/b_200plottemp.png", plot = b_200plottemp, width = 7, height = 5, units = "in", dpi = 600)
-
+ggsave("../output_files/b50_150plottemp.png", plot = b50_150plottemp, width = 7, height = 5, units = "in", dpi = 600)
+ggsave("../output_files/b150bplottemp.png", plot = b150bplottemp, width = 7, height = 5, units = "in", dpi = 600)
 ```
 
-
-niche of sharks
+###graphs displaying niche of sharks
 ```{r}
 dengraph <- ggplot(pacific_tad, aes(x = sst, y = do_depth)) +
   stat_density_2d(
@@ -521,7 +439,7 @@ disgraph <- ggplot(depth_long, aes(x = depth_bin, y = time_prop)) +
   theme_minimal()+
   coord_flip()+
   labs(
-    title = "Distribution of Time at Each Depth by Dissolved Oxygen Boundry Depth",
+    title = "Distribution of Time at Each Depth by Dissolved Oxygen Boundary Depth",
     x = "Depth Range",
     y = "Proportion of Time"
   )+
